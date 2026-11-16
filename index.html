@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Painel Público da FECT - Consulta de Hospedagem e Deslocamento</title>
+
+    <!-- Bootstrap & Ícones -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <!-- Fonte -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+      :root {
+        --primary-color: #1e3a8a;
+        --secondary-color: #3b82f6;
+        --accent-color: #f59e0b;
+        --background-color: #ffffff;
+        --section-bg: #f8fafc;
+        --text-color: #1f2937;
+        --btn-color: #1e3a8a;
+        --border-color: #e5e7eb;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0 }
+      body {
+        font-family: "Poppins", sans-serif;
+        background: #f8fafc;
+        color: var(--text-color);
+        display: flex; flex-direction: column;
+        min-height: 100vh;
+      }
+
+      /* TOPO */
+      .banner-container {
+        width: 100%;
+        text-align: center;
+        background: var(--background-color);
+        padding: 30px 15px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+      .banner-img {
+        max-width: 100%;
+        height: auto;
+        max-height: 180px;
+        object-fit: contain;
+        border-radius: 8px;
+      }
+      .banner-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--primary-color);
+      }
+      .banner-sub {
+        font-size: 14px;
+        color: #64748b;
+      }
+
+      /* FORMULÁRIO */
+      .search-section {
+        padding: 60px 15px 40px;
+        text-align: center;
+        background: var(--section-bg);
+      }
+      .section-wrapper h2 {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 8px;
+      }
+      .section-wrapper p {
+        margin-top: 8px;
+        color: #64748b;
+        font-size: 16px;
+        line-height: 1.6;
+      }
+      .accent-bar {
+        width: 80px;
+        height: 4px;
+        background: var(--accent-color);
+        margin: 24px auto 0;
+        border-radius: 9999px;
+      }
+      .search-container {
+        max-width: 500px;
+        margin: 32px auto;
+        background: var(--background-color);
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+
+      /* RADIO BUTTONS */
+      .radio-container {
+        display: flex;
+        justify-content: center;
+        gap: 32px;
+        margin-bottom: 20px;
+      }
+      .radio-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        padding: 8px 12px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+      .radio-option:hover { background: #f1f5f9 }
+      .radio-option input[type="radio"] {
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        cursor: pointer;
+        accent-color: var(--primary-color);
+      }
+      .radio-option label {
+        font-weight: 500;
+        color: var(--text-color);
+        cursor: pointer;
+        margin: 0;
+        font-size: 14px;
+      }
+
+      .input-container {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: center;
+      }
+      #search_input { width: 250px; font-size: 14px }
+      .form-control {
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        background: #fff;
+      }
+      .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+        outline: none;
+      }
+      .btn-custom {
+        background: var(--btn-color);
+        color: #fff;
+        font-weight: 600;
+        border: none;
+        border-radius: 12px;
+        padding: 10px 20px;
+        min-width: 110px;
+        font-size: 14px;
+        box-shadow: 0 2px 4px rgba(30, 58, 138, 0.2);
+        transition: all 0.3s ease;
+      }
+      .btn-custom:hover {
+        background: var(--primary-color);
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(30, 58, 138, 0.3);
+      }
+
+      /* LOADER */
+      #loader-container { margin: 20px 0 40px }
+      #loader {
+        width: 3rem; height: 3rem;
+        border-width: .25em;
+        color: var(--secondary-color);
+      }
+
+      /* RESULTADOS */
+      #results-container { padding: 0 15px 40px }
+      .result-wrapper {
+        max-width: 1200px;
+        margin: 0 auto 32px;
+        background: var(--background-color);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border: 1px solid var(--border-color);
+      }
+      .user-info-header {
+        background: var(--primary-color);
+        color: #fff;
+        padding: 16px 20px;
+        font-size: 1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px 12px;
+      }
+      .user-info-header i { font-size: 1.2rem }
+      .badge-config {
+        background: var(--accent-color);
+        color: #1f2937;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 4px 12px;
+        border-radius: 9999px;
+      }
+      .result-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--background-color);
+      }
+      .result-table thead { background: #f8fafc }
+      .result-table th {
+        padding: 16px 12px;
+        font-weight: 600;
+        color: var(--primary-color);
+        text-align: center;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--border-color);
+      }
+      .result-table td {
+        padding: 16px 12px;
+        border-top: 1px solid #f1f5f9;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        text-align: center;
+        vertical-align: middle;
+      }
+      .result-table td.left { text-align: left }
+      .result-table tbody tr:hover {
+        background: #f8fafc;
+        transition: background 0.2s ease;
+      }
+      .quarto-tag {
+        display: inline-block;
+        font-weight: 600;
+        color: var(--primary-color);
+      }
+
+      /* RODAPÉ */
+      .footer {
+        margin-top: auto;
+        background: var(--primary-color);
+        color: #fff;
+        padding: 32px 0;
+        font-size: 0.875rem;
+        border-top: 1px solid #e5e7eb;
+      }
+      .footer a {
+        color: var(--accent-color);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.3s ease;
+      }
+      .footer a:hover { color: #fbbf24; text-decoration: underline }
+
+      /* RESPONSIVO */
+      @media (max-width: 768px) {
+        .search-container { margin: 24px 16px; padding: 20px }
+        .radio-container { gap: 20px; margin-bottom: 16px }
+        .input-container { flex-direction: column; width: 100%; gap: 16px }
+        #search_input { width: 100% }
+        .banner-title { font-size: 22px }
+        .section-wrapper h2 { font-size: 20px }
+        .search-section { padding: 40px 15px 32px }
+        .result-wrapper { margin: 0 0 24px; overflow-x: auto }
+        .result-table.wide { min-width: 900px }
+        .result-table th, .result-table td { padding: 12px 8px; font-size: 0.7rem }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- TOPO -->
+    <div class="banner-container">
+      <img src="https://i.postimg.cc/1txbdXb9/FECT-amostra-Prancheta-3-copia-3.png" alt="Banner FECT" class="banner-img">
+    </div>
+
+    <!-- FORMULÁRIO -->
+    <section class="search-section">
+      <div class="section-wrapper">
+        <h2>CONSULTA DE HOSPEDAGEM E DESLOCAMENTO</h2>
+        <p>Digite o INEP da escola ou o número do quarto para consultar</p>
+        <div class="accent-bar"></div>
+      </div>
+      <div class="search-container">
+        <div class="radio-container">
+          <div class="radio-option">
+            <input type="radio" id="radio_inep" name="search_type" value="inep" checked>
+            <label for="radio_inep">INEP</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" id="radio_quarto" name="search_type" value="quarto">
+            <label for="radio_quarto">Quarto</label>
+          </div>
+        </div>
+
+        <div class="input-container">
+          <input
+            type="text" id="search_input"
+            class="form-control"
+            placeholder="12345678"
+            inputmode="numeric"
+            autocomplete="off"
+            oninput="formatInput()"
+          />
+          <button class="btn btn-custom" onclick="buscar()">
+            <i class="fas fa-search"></i> Buscar
+          </button>
+        </div>
+      </div>
+      <div id="loader-container" class="text-center">
+        <div id="loader" class="spinner-border d-none" role="status"></div>
+      </div>
+    </section>
+
+    <!-- RESULTADOS -->
+    <div id="results-container"></div>
+
+    <!-- RODAPÉ -->
+    <footer class="footer">
+      <div style="font-size: 10px; text-align: center;">
+        Governo do Estado da Paraíba<br />
+        Secretaria de Estado da Educação - SEE<br />
+        Gerência Executiva de Educação das Escolas Cidadãs Técnicas - GEECT<br />
+        Coordenação Geral do ParaíbaTEC e PRONATEC-PB<br />
+        Av. João da Mata, s/n - Bloco I - 5º Andar, Jaguaribe - João Pessoa/PB CEP 58015-900<br />
+        E-mail: geect@see.pb.gov.br<br />
+        Telefone: (83) 99144-1013<br />
+        <a href="http://paraiba.pb.gov.br/diretas/secretaria-da-educacao">paraiba.pb.gov.br/diretas/secretaria-da-educacao</a>
+      </div>
+    </footer>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // ⚠️ Cole aqui a URL do app da Web gerada ao implantar o Apps Script (termina em /exec)
+      const API_URL = 'https://script.google.com/macros/s/AKfycbw4BSq9wbcj2mmiMKUiKkCWQc-zpgiNe8dnghxJm1c7PR_C-kl1o84h8gRyWVSPCWjv/exec';
+
+      function getSelectedType() {
+        const r = document.querySelector('input[name="search_type"]:checked');
+        return r ? r.value : 'inep';
+      }
+
+      // Escapa texto vindo da planilha antes de inserir no HTML
+      function esc(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+      }
+
+      // INEP: só números (8). Quarto: aceita "106" ou "Q-106"
+      function formatInput() {
+        const input = document.getElementById('search_input');
+        const digits = input.value.replace(/\D/g, '');
+        if (getSelectedType() === 'inep') {
+          input.value = digits.slice(0, 8);
+          input.placeholder = '12345678';
+        } else {
+          input.value = digits ? 'Q-' + digits.slice(0, 3) : '';
+          input.placeholder = 'Q-106';
+        }
+      }
+
+      document.querySelectorAll('input[name="search_type"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+          document.getElementById('search_input').value = '';
+          document.getElementById('results-container').innerHTML = '';
+          formatInput();
+        });
+      });
+
+      function showAlert(msg) {
+        Swal.fire({ icon: 'warning', title: 'Atenção', text: msg, confirmButtonColor: '#1e3a8a' });
+      }
+      function showError(msg) {
+        Swal.fire({ icon: 'error', title: 'Erro', text: msg, timer: 4000, confirmButtonColor: '#1e3a8a' });
+      }
+
+      // ---------- INEP ----------
+      function tabelaInep(dados) {
+        const escola = esc(dados[0].escola || 'Escola não informada');
+        const gre = esc(dados[0].gre || '');
+        let html = `
+          <div class="result-wrapper">
+            <div class="user-info-header">
+              <i class="fas fa-school"></i><span>${escola}</span>
+              ${gre ? `<span class="badge-config">${gre}</span>` : ''}
+            </div>
+            <table class="result-table wide">
+              <thead>
+                <tr>
+                  <th>GRE</th>
+                  <th>Escola</th>
+                  <th>Nome</th>
+                  <th>Quarto</th>
+                  <th>Transporte</th>
+                  <th>Orientações para o deslocamento</th>
+                </tr>
+              </thead>
+              <tbody>`;
+        dados.forEach(i => {
+          html += `
+                <tr>
+                  <td>${esc(i.gre) || '-'}</td>
+                  <td>${esc(i.escola) || '-'}</td>
+                  <td>${esc(i.nome) || '-'}</td>
+                  <td><span class="quarto-tag">${esc(i.quarto) || '-'}</span></td>
+                  <td>${esc(i.transporte) || '-'}</td>
+                  <td class="left">${esc(i.orientacao) || '-'}</td>
+                </tr>`;
+        });
+        return html + `</tbody></table></div>`;
+      }
+
+      // ---------- QUARTO ----------
+      function tabelaQuarto(result) {
+        let html = `
+          <div class="result-wrapper">
+            <div class="user-info-header">
+              <i class="fas fa-bed"></i><span>Quarto ${esc(result.quarto)}</span>
+              ${result.configuracao ? `<span class="badge-config">${esc(result.configuracao)}</span>` : ''}
+            </div>
+            <table class="result-table">
+              <thead>
+                <tr><th>Nome</th><th>Escola</th><th>Transporte</th></tr>
+              </thead>
+              <tbody>`;
+        result.data.forEach(i => {
+          html += `
+                <tr>
+                  <td>${esc(i.nome) || '-'}</td>
+                  <td>${esc(i.escola) || '-'}</td>
+                  <td>${esc(i.transporte) || '-'}</td>
+                </tr>`;
+        });
+        return html + `</tbody></table></div>`;
+      }
+
+      // ---------- BUSCA ----------
+      async function buscar() {
+        const tipo = getSelectedType();
+        const valor = document.getElementById('search_input').value;
+        const digits = valor.replace(/\D/g, '');
+        const loader = document.getElementById('loader');
+        const container = document.getElementById('results-container');
+
+        if (API_URL.indexOf('COLE_AQUI') === 0) {
+          showError('Configure a API_URL no código da página.');
+          return;
+        }
+        if (!digits) {
+          showAlert(tipo === 'inep' ? 'Digite um INEP para realizar a busca.' : 'Digite o número do quarto. Ex.: Q-106.');
+          return;
+        }
+        if (tipo === 'inep' && digits.length !== 8) {
+          showAlert('O INEP deve ter 8 dígitos.');
+          return;
+        }
+
+        loader.classList.remove('d-none');
+        container.innerHTML = '';
+
+        try {
+          const param = tipo === 'inep' ? digits : 'Q-' + digits;
+          const resp = await fetch(`${API_URL}?${tipo}=${encodeURIComponent(param)}`);
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          const result = await resp.json();
+          loader.classList.add('d-none');
+
+          if (!result.success) { showError(result.error || 'Erro ao buscar dados.'); return; }
+          if (!result.data || result.data.length === 0) {
+            showError(tipo === 'inep' ? 'INEP não encontrado na base de dados.' : 'Quarto não encontrado na base de dados.');
+            return;
+          }
+
+          container.innerHTML = tipo === 'inep' ? tabelaInep(result.data) : tabelaQuarto(result);
+        } catch (err) {
+          console.error(err);
+          loader.classList.add('d-none');
+          showError('Erro de conexão. Tente novamente mais tarde.');
+        }
+      }
+
+      document.getElementById('search_input').addEventListener('keypress', e => {
+        if (e.key === 'Enter') buscar();
+      });
+    </script>
+  </body>
+</html>
