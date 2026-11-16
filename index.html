@@ -263,7 +263,7 @@
         .section-wrapper h2 { font-size: 20px }
         .search-section { padding: 40px 15px 32px }
         .result-wrapper { margin: 0 0 24px; overflow-x: auto }
-        .result-table.wide { min-width: 900px }
+        .result-table.wide { min-width: 1000px }
         .result-table th, .result-table td { padding: 12px 8px; font-size: 0.7rem }
       }
     </style>
@@ -391,6 +391,7 @@
                 <tr>
                   <th>GRE</th>
                   <th>Escola</th>
+                  <th>Projeto</th>
                   <th>Nome</th>
                   <th>Quarto</th>
                   <th>Transporte</th>
@@ -403,6 +404,7 @@
                 <tr>
                   <td>${esc(i.gre) || '-'}</td>
                   <td>${esc(i.escola) || '-'}</td>
+                  <td>${esc(i.projeto) || '-'}</td>
                   <td>${esc(i.nome) || '-'}</td>
                   <td><span class="quarto-tag">${esc(i.quarto) || '-'}</span></td>
                   <td>${esc(i.transporte) || '-'}</td>
@@ -422,7 +424,7 @@
             </div>
             <table class="result-table">
               <thead>
-                <tr><th>Nome</th><th>Escola</th><th>Transporte</th></tr>
+                <tr><th>Nome</th><th>Escola</th><th>Projeto</th><th>Transporte</th></tr>
               </thead>
               <tbody>`;
         result.data.forEach(i => {
@@ -430,6 +432,7 @@
                 <tr>
                   <td>${esc(i.nome) || '-'}</td>
                   <td>${esc(i.escola) || '-'}</td>
+                  <td>${esc(i.projeto) || '-'}</td>
                   <td>${esc(i.transporte) || '-'}</td>
                 </tr>`;
         });
