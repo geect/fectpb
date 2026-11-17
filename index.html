@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>FECT - Consulta de Hospedagem e Deslocamento</title>
+    <title>FECT - Consulta de Hospedagem, Transporte e Alimentação</title>
 
     <!-- Bootstrap & Ícones -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
@@ -47,19 +47,37 @@
         object-fit: contain;
         border-radius: 8px;
       }
-      .banner-title {
-        font-size: 28px;
-        font-weight: 700;
-        color: var(--primary-color);
+
+      /* BOTÕES DE MODO */
+      .mode-switch {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 24px 15px 0;
+        background: var(--section-bg);
       }
-      .banner-sub {
+      .mode-btn {
+        border: 2px solid var(--primary-color);
+        background: #fff;
+        color: var(--primary-color);
+        font-weight: 600;
         font-size: 14px;
-        color: #64748b;
+        border-radius: 12px;
+        padding: 10px 22px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+      .mode-btn:hover { background: #eef2ff }
+      .mode-btn.active {
+        background: var(--primary-color);
+        color: #fff;
+        box-shadow: 0 3px 8px rgba(30, 58, 138, 0.3);
       }
 
       /* FORMULÁRIO */
       .search-section {
-        padding: 60px 15px 40px;
+        padding: 32px 15px 40px;
         text-align: center;
         background: var(--section-bg);
       }
@@ -235,6 +253,7 @@
         font-weight: 600;
         color: var(--primary-color);
       }
+      .table-scroll { overflow-x: auto }
 
       /* RODAPÉ */
       .footer {
@@ -259,12 +278,13 @@
         .radio-container { gap: 20px; margin-bottom: 16px }
         .input-container { flex-direction: column; width: 100%; gap: 16px }
         #search_input { width: 100% }
-        .banner-title { font-size: 22px }
         .section-wrapper h2 { font-size: 20px }
-        .search-section { padding: 40px 15px 32px }
+        .search-section { padding: 24px 15px 32px }
         .result-wrapper { margin: 0 0 24px; overflow-x: auto }
         .result-table.wide { min-width: 1000px }
+        .result-table.food { min-width: 900px }
         .result-table th, .result-table td { padding: 12px 8px; font-size: 0.7rem }
+        .mode-btn { width: 100%; max-width: 340px }
       }
     </style>
   </head>
@@ -275,15 +295,25 @@
       <img src="https://i.postimg.cc/1txbdXb9/FECT-amostra-Prancheta-3-copia-3.png" alt="Banner FECT" class="banner-img">
     </div>
 
+    <!-- BOTÕES DE MODO -->
+    <div class="mode-switch">
+      <button type="button" id="btn_hosp" class="mode-btn active" onclick="setModo('hospedagem')">
+        <i class="fas fa-bed"></i> Hospedagem e Transporte
+      </button>
+      <button type="button" id="btn_alim" class="mode-btn" onclick="setModo('alimentacao')">
+        <i class="fas fa-utensils"></i> Alimentação
+      </button>
+    </div>
+
     <!-- FORMULÁRIO -->
     <section class="search-section">
       <div class="section-wrapper">
-        <h2>CONSULTA DE HOSPEDAGEM E DESLOCAMENTO</h2>
-        <p>Digite o INEP da escola ou o número do quarto para consultar</p>
+        <h2 id="titulo">CONSULTA DE HOSPEDAGEM E TRANSPORTE</h2>
+        <p id="subtitulo">Digite o INEP da escola ou o número do quarto para consultar</p>
         <div class="accent-bar"></div>
       </div>
       <div class="search-container">
-        <div class="radio-container">
+        <div class="radio-container" id="radio_box">
           <div class="radio-option">
             <input type="radio" id="radio_inep" name="search_type" value="inep" checked>
             <label for="radio_inep">INEP</label>
@@ -333,10 +363,14 @@
     <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-      // ⚠️ Cole aqui a URL do app da Web gerada ao implantar o Apps Script (termina em /exec)
+      // URL do app da Web do Apps Script (termina em /exec).
+      // Se você criar uma nova implantação, atualize aqui.
       const API_URL = 'https://script.google.com/macros/s/AKfycbw4BSq9wbcj2mmiMKUiKkCWQc-zpgiNe8dnghxJm1c7PR_C-kl1o84h8gRyWVSPCWjv/exec';
 
+      let modo = 'hospedagem'; // 'hospedagem' | 'alimentacao'
+
       function getSelectedType() {
+        if (modo === 'alimentacao') return 'cpf';
         const r = document.querySelector('input[name="search_type"]:checked');
         return r ? r.value : 'inep';
       }
@@ -348,17 +382,46 @@
         }[c]));
       }
 
-      // INEP: só números (8). Quarto: aceita "106" ou "Q-106"
+      // INEP: 8 números. Quarto: "106" ou "Q-106". CPF: 000.000.000-00
       function formatInput() {
         const input = document.getElementById('search_input');
         const digits = input.value.replace(/\D/g, '');
-        if (getSelectedType() === 'inep') {
+        const tipo = getSelectedType();
+        if (tipo === 'inep') {
           input.value = digits.slice(0, 8);
           input.placeholder = '12345678';
-        } else {
+          input.maxLength = 8;
+        } else if (tipo === 'quarto') {
           input.value = digits ? 'Q-' + digits.slice(0, 3) : '';
           input.placeholder = '';
+          input.maxLength = 5;
+        } else {
+          const d = digits.slice(0, 11);
+          let m = d;
+          if (d.length > 9) m = d.replace(/^(\d{3})(\d{3})(\d{3})(\d{1,2})$/, '$1.$2.$3-$4');
+          else if (d.length > 6) m = d.replace(/^(\d{3})(\d{3})(\d{1,3})$/, '$1.$2.$3');
+          else if (d.length > 3) m = d.replace(/^(\d{3})(\d{1,3})$/, '$1.$2');
+          input.value = m;
+          input.placeholder = '000.000.000-00';
+          input.maxLength = 14;
         }
+      }
+
+      function setModo(novo) {
+        modo = novo;
+        const alim = modo === 'alimentacao';
+        document.getElementById('btn_hosp').classList.toggle('active', !alim);
+        document.getElementById('btn_alim').classList.toggle('active', alim);
+        document.getElementById('radio_box').style.display = alim ? 'none' : 'flex';
+        document.getElementById('titulo').textContent = alim
+          ? 'CONSULTA DE ALIMENTAÇÃO'
+          : 'CONSULTA DE HOSPEDAGEM E TRANSPORTE';
+        document.getElementById('subtitulo').textContent = alim
+          ? 'Digite o CPF para consultar as refeições'
+          : 'Digite o INEP da escola ou o número do quarto para consultar';
+        document.getElementById('search_input').value = '';
+        document.getElementById('results-container').innerHTML = '';
+        formatInput();
       }
 
       document.querySelectorAll('input[name="search_type"]').forEach(radio => {
@@ -439,6 +502,26 @@
         return html + `</tbody></table></div>`;
       }
 
+      // ---------- ALIMENTAÇÃO (CPF) ----------
+      function tabelaAlimentacao(dados) {
+        return dados.map(p => {
+          const ths = p.refeicoes.map(r => `<th>${esc(r.refeicao)}</th>`).join('');
+          const tds = p.refeicoes.map(r => `<td>${esc(r.valor) || '-'}</td>`).join('');
+          return `
+            <div class="result-wrapper">
+              <div class="user-info-header">
+                <i class="fas fa-user"></i><span>${esc(p.nome) || 'Nome não informado'}</span>
+              </div>
+              <div class="table-scroll">
+                <table class="result-table food">
+                  <thead><tr>${ths}</tr></thead>
+                  <tbody><tr>${tds}</tr></tbody>
+                </table>
+              </div>
+            </div>`;
+        }).join('');
+      }
+
       // ---------- BUSCA ----------
       async function buscar() {
         const tipo = getSelectedType();
@@ -447,16 +530,20 @@
         const loader = document.getElementById('loader');
         const container = document.getElementById('results-container');
 
-        if (API_URL.indexOf('COLE_AQUI') === 0) {
-          showError('Configure a API_URL no código da página.');
-          return;
-        }
         if (!digits) {
-          showAlert(tipo === 'inep' ? 'Digite um INEP para realizar a busca.' : 'Digite o número do quarto. Ex.: Q-106.');
+          showAlert(
+            tipo === 'inep' ? 'Digite um INEP para realizar a busca.' :
+            tipo === 'cpf' ? 'Digite um CPF para realizar a busca.' :
+            'Digite o número do quarto. Ex.: Q-106.'
+          );
           return;
         }
         if (tipo === 'inep' && digits.length !== 8) {
           showAlert('O INEP deve ter 8 dígitos.');
+          return;
+        }
+        if (tipo === 'cpf' && digits.length !== 11) {
+          showAlert('O CPF deve ter 11 dígitos.');
           return;
         }
 
@@ -464,7 +551,7 @@
         container.innerHTML = '';
 
         try {
-          const param = tipo === 'inep' ? digits : 'Q-' + digits;
+          const param = tipo === 'quarto' ? 'Q-' + digits : digits;
           const resp = await fetch(`${API_URL}?${tipo}=${encodeURIComponent(param)}`);
           if (!resp.ok) throw new Error('HTTP ' + resp.status);
           const result = await resp.json();
@@ -472,11 +559,18 @@
 
           if (!result.success) { showError(result.error || 'Erro ao buscar dados.'); return; }
           if (!result.data || result.data.length === 0) {
-            showError(tipo === 'inep' ? 'INEP não encontrado na base de dados.' : 'Quarto não encontrado na base de dados.');
+            showError(
+              tipo === 'inep' ? 'INEP não encontrado na base de dados.' :
+              tipo === 'cpf' ? 'CPF não encontrado na base de dados.' :
+              'Quarto não encontrado na base de dados.'
+            );
             return;
           }
 
-          container.innerHTML = tipo === 'inep' ? tabelaInep(result.data) : tabelaQuarto(result);
+          container.innerHTML =
+            tipo === 'inep' ? tabelaInep(result.data) :
+            tipo === 'cpf' ? tabelaAlimentacao(result.data) :
+            tabelaQuarto(result);
         } catch (err) {
           console.error(err);
           loader.classList.add('d-none');
